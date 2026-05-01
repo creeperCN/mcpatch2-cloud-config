@@ -1,0 +1,3 @@
+{
+  "/api/security/cert-fingerprint/route": "app/api/security/cert-fingerprint/route.js"
+}

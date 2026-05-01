@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 管理员账户
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// 云控配置版本记录
+model CloudConfig {
+  id         String         @id @default(cuid())
+  version    Int            @unique
+  yamlData   String
+  jsonData   String
+  isActive   Boolean        @default(false)
+  changeNote String         @default("")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  pullLogs   ClientPullLog[]
+
+  @@index([isActive])
+  @@index([version(sort: Desc)])
+}
+
+// 客户端拉取日志
+model ClientPullLog {
+  id        String      @id @default(cuid())
+  ipAddress String
+  userAgent String      @default("")
+  configId  String
+  createdAt DateTime    @default(now())
+
+  config CloudConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([configId])
+}
+
+// API 密钥
+model ApiKey {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String   @default("默认密钥")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 安全配置（6层防护体系，密钥碎片化存储）
+// 系统设计为单行记录（通过应用层保证）
+model SecurityConfig {
+  id              String   @id @default(cuid())
+  // RSA 密钥对（公钥明文存储，私钥碎片化）
+  rsaPublicKey    String
+  // 【已弃用】此字段仅作数据库迁移兼容保留，实际不再存储完整私钥
+  rsaPrivateKey   String   @default("")
+  // 【已弃用】此字段仅作数据库迁移兼容保留，实际不再存储完整 HMAC 密钥
+  hmacSecret      String   @default("")
+  // HMAC 密钥碎片 (original = frag1 XOR frag2 XOR frag3)
+  hmacFrag1       String   @default("")
+  hmacFrag2       String   @default("")
+  hmacFrag3       String   @default("")
+  // RSA 私钥碎片
+  rsaPrivFrag1    String   @default("")
+  rsaPrivFrag2    String   @default("")
+  rsaPrivFrag3    String   @default("")
+  // AES-128 加密密钥（用于客户端缓存加密，客户端需预共享此密钥）
+  aesKey          String   @default("")
+  // HTTPS 证书 SHA-256 指纹（用于证书锁定，64 hex chars）
+  certFingerprint String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -1,0 +1,57 @@
+# ================================================================
+#  Mcpatch 云控管理端 — Docker Compose 配置
+#  包含应用 + 反向代理 (Caddy)
+# ================================================================
+
+services:
+  mcpatch-cloud-control:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: mcpatch-cloud-control
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=file:/app/data/db/custom.db
+      # 重要！请修改为随机字符串
+      - NEXTAUTH_SECRET=please-change-this-to-a-random-secret-key
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/init"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # 可选: Caddy 反向代理（自动 HTTPS）
+  caddy:
+    image: caddy:2-alpine
+    container_name: mcpatch-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      mcpatch-cloud-control:
+        condition: service_healthy
+
+volumes:
+  app-data:
+    driver: local
+  caddy-data:
+    driver: local
+  caddy-config:
+    driver: local

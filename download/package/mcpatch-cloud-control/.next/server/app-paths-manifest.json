@@ -1,0 +1,20 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/client/route": "app/api/client/route.js",
+  "/api/config/history/route": "app/api/config/history/route.js",
+  "/api/config/route": "app/api/config/route.js",
+  "/api/init/route": "app/api/init/route.js",
+  "/api/keys/route": "app/api/keys/route.js",
+  "/api/logs/route": "app/api/logs/route.js",
+  "/api/route": "app/api/route.js",
+  "/api/security/cert-fingerprint/route": "app/api/security/cert-fingerprint/route.js",
+  "/api/security/public-key/route": "app/api/security/public-key/route.js",
+  "/api/security/rotate-aes/route": "app/api/security/rotate-aes/route.js",
+  "/api/security/rotate-hmac/route": "app/api/security/rotate-hmac/route.js",
+  "/api/security/route": "app/api/security/route.js",
+  "/api/stats/route": "app/api/stats/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
+}

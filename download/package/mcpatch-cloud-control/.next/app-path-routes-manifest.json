@@ -1,0 +1,20 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/api/client/route": "/api/client",
+  "/api/config/history/route": "/api/config/history",
+  "/api/config/route": "/api/config",
+  "/api/init/route": "/api/init",
+  "/api/keys/route": "/api/keys",
+  "/api/logs/route": "/api/logs",
+  "/api/route": "/api",
+  "/api/security/cert-fingerprint/route": "/api/security/cert-fingerprint",
+  "/api/security/public-key/route": "/api/security/public-key",
+  "/api/security/rotate-aes/route": "/api/security/rotate-aes",
+  "/api/security/rotate-hmac/route": "/api/security/rotate-hmac",
+  "/api/security/route": "/api/security",
+  "/api/stats/route": "/api/stats",
+  "/login/page": "/login",
+  "/page": "/"
+}

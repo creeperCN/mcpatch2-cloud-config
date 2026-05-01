@@ -1,0 +1,51 @@
+[Unit]
+Description=Mcpatch Cloud Control Panel
+Documentation=https://github.com/mcpatch-cloud-control
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mcpatch
+Group=mcpatch
+WorkingDirectory=/opt/mcpatch-cloud-control
+ExecStart=/usr/bin/node .next/standalone/server.js
+# 如果使用 bun，将上面改为:
+# ExecStart=/usr/local/bin/bun .next/standalone/server.js
+
+# 使用 bun 时取消下面注释:
+# ExecStart=/root/.bun/bin/bun .next/standalone/server.js
+
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/opt/mcpatch-cloud-control/.env
+
+# 安全加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/mcpatch-cloud-control/data
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# 重启策略
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# 资源限制
+LimitNOFILE=65535
+MemoryMax=512M
+CPUQuota=50%
+
+# 日志
+StandardOutput=append:/opt/mcpatch-cloud-control/data/logs/server.log
+StandardError=append:/opt/mcpatch-cloud-control/data/logs/error.log
+SyslogIdentifier=mcpatch-cloud-control
+
+[Install]
+WantedBy=multi-user.target

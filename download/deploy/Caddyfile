@@ -1,0 +1,29 @@
+# Caddy 反向代理配置
+# 将 your-domain.com 替换为你的域名
+# Caddy 会自动申请和续期 Let's Encrypt HTTPS 证书
+
+your-domain.com {
+    reverse_proxy mcpatch-cloud-control:3000
+
+    # 安全头
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # 日志
+    log {
+        output file /data/caddy/access.log {
+            roll_size 50mb
+            roll_keep 5
+        }
+    }
+}
+
+# 本地开发（无 HTTPS）
+# :80 {
+#     reverse_proxy mcpatch-cloud-control:3000
+# }

@@ -1,0 +1,3 @@
+{
+  "/api/security/public-key/route": "app/api/security/public-key/route.js"
+}

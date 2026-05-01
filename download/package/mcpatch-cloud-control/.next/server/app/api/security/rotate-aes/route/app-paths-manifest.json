@@ -1,0 +1,3 @@
+{
+  "/api/security/rotate-aes/route": "app/api/security/rotate-aes/route.js"
+}

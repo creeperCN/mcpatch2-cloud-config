@@ -1,0 +1,155 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api",
+      "regex": "^/api(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api(?:/)?$"
+    },
+    {
+      "page": "/api/client",
+      "regex": "^/api/client(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/client(?:/)?$"
+    },
+    {
+      "page": "/api/config",
+      "regex": "^/api/config(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/config(?:/)?$"
+    },
+    {
+      "page": "/api/config/history",
+      "regex": "^/api/config/history(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/config/history(?:/)?$"
+    },
+    {
+      "page": "/api/init",
+      "regex": "^/api/init(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/init(?:/)?$"
+    },
+    {
+      "page": "/api/keys",
+      "regex": "^/api/keys(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/keys(?:/)?$"
+    },
+    {
+      "page": "/api/logs",
+      "regex": "^/api/logs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/logs(?:/)?$"
+    },
+    {
+      "page": "/api/security",
+      "regex": "^/api/security(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/security(?:/)?$"
+    },
+    {
+      "page": "/api/security/cert-fingerprint",
+      "regex": "^/api/security/cert\\-fingerprint(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/security/cert\\-fingerprint(?:/)?$"
+    },
+    {
+      "page": "/api/security/public-key",
+      "regex": "^/api/security/public\\-key(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/security/public\\-key(?:/)?$"
+    },
+    {
+      "page": "/api/security/rotate-aes",
+      "regex": "^/api/security/rotate\\-aes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/security/rotate\\-aes(?:/)?$"
+    },
+    {
+      "page": "/api/security/rotate-hmac",
+      "regex": "^/api/security/rotate\\-hmac(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/security/rotate\\-hmac(?:/)?$"
+    },
+    {
+      "page": "/api/stats",
+      "regex": "^/api/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stats(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
