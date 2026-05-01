@@ -1,17 +1,10 @@
 import { db } from '@/lib/db'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { getPublicKeyFingerprint } from '@/lib/crypto-utils'
 
-// GET /api/security/public-key — 导出 RSA 公钥（管理员）
+// GET /api/security/public-key — 导出 RSA 公钥（公开接口，客户端验签用）
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 })
-    }
-
     const secConfig = await db.securityConfig.findFirst()
     if (!secConfig) {
       return NextResponse.json({ error: '安全配置未初始化' }, { status: 404 })

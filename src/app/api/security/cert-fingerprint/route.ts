@@ -4,14 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { generateCertFingerprint, formatFingerprintForJava, normalizeFingerprint } from '@/lib/crypto-utils'
 
-// GET /api/security/cert-fingerprint — 获取证书指纹（管理员）
+// GET /api/security/cert-fingerprint — 获取证书指纹（公开接口，客户端证书锁定用）
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 })
-    }
-
     const secConfig = await db.securityConfig.findFirst()
     if (!secConfig) {
       return NextResponse.json({ error: '安全配置未初始化' }, { status: 404 })
