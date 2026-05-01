@@ -842,7 +842,8 @@ const doc = new Document({
           margin: { top: 0, bottom: 0, left: 0, right: 0 },
         },
       },
-      children: buildCoverR4({
+      children: [
+        ...buildCoverR4({
         palette: P,
         title: "Mcpatch2 \u5ba2\u6237\u7aef\u5bc6\u94a5\u788e\u7247\u5316\u5b89\u5168\u5b9e\u73b0\u65b9\u6848",
         englishLabel: "KEY SHARDING SECURITY IMPLEMENTATION",
