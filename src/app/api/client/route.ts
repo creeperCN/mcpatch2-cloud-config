@@ -185,18 +185,23 @@ export async function GET(request: Request) {
       }
     }
 
-    // ============ Layer 4: AES-128 加密（可选） ============
-    // 安全模式已启用时，AES 密钥不通过响应头发送。
-    // 客户端应通过初始化时预共享获取密钥，本地解密。
-    // IV 仍通过响应头发送（IV 本身不需要保密，仅需随机唯一）。
-    if (isEncrypted && securityEnabled) {
+    // ============ Layer 4: AES-128-CBC 加密（可选，独立于 RSA/HMAC 安全模式） ============
+    // AES 加密层与 securityEnabled（RSA/HMAC 开关）解耦。
+    // 只要数据库中存在 aesKey 且客户端请求加密，就执行 AES 加密并返回必要的响应头。
+    // 客户端通过 X-AES-Nonce / X-AES-IV 头获取解密参数。
+    // AES 密钥本身不通过响应头发送，客户端需在初始化时预共享获取。
+    if (isEncrypted) {
       if (!securityKeys) securityKeys = await getSecurityKeys()
       if (securityKeys && securityKeys.aesKey) {
         try {
           const { encrypted, iv } = encryptConfig(yamlContent, securityKeys.aesKey)
           responseHeaders['Content-Type'] = 'application/octet-stream'
           // AES 密钥不放入响应头，客户端需预存此密钥
+          // IV 通过响应头发送（IV 本身不需要保密，仅需随机唯一）
           responseHeaders['X-AES-IV'] = iv
+          // 生成 Nonce（用于客户端验证加密一致性）
+          const nonce = crypto.randomBytes(16).toString('hex')
+          responseHeaders['X-AES-Nonce'] = nonce
           responseHeaders['X-Encryption-Algorithm'] = 'AES-128-CBC'
           responseHeaders['X-AES-Fingerprint'] = getAesKeyFingerprint(securityKeys.aesKey)
           return new NextResponse(encrypted, {

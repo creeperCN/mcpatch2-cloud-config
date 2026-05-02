@@ -48,6 +48,10 @@ print_banner() {
 }
 
 pre_check() {
+    if [ ! -f "$APP_DIR/run.js" ]; then
+        echo "❌ 未找到 run.js"
+        exit 1
+    fi
     if [ ! -f "$APP_DIR/server.js" ]; then
         echo "❌ 未找到 server.js"
         exit 1
@@ -157,7 +161,10 @@ detect_runtime() {
 run_server() {
     cd "$APP_DIR"
     > "$LOG_FILE"
-    PORT="$PORT" HOSTNAME="$BIND_HOST" "$RUNTIME_CMD" server.js >> "$LOG_FILE" 2>&1 &
+    # 使用 run.js 而非直接启动 server.js
+    # run.js 会在 server.js 启动前将 .env 文件中的环境变量注入 process.env
+    # 解决 Next.js standalone 模式不自动加载 .env 的问题
+    PORT="$PORT" HOSTNAME="$BIND_HOST" "$RUNTIME_CMD" run.js >> "$LOG_FILE" 2>&1 &
     CHILD_PID=$!
     echo $$ > "$PID_FILE"
     trap "
