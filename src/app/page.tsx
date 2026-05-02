@@ -318,45 +318,11 @@ export default function Dashboard() {
     } catch { showToast('复制失败', 'error') }
   }
 
-  // 一键复制 HMAC 碎片（3 个一起）
-  const copyHMACFrags = async () => {
+  // 一键复制文本到剪贴板
+  const copyText = async (text: string, label: string) => {
     try {
-      const hmac = securityOverview?.layers.hmacSigning
-      if (!hmac?.hmacFrag1) { showToast('HMAC 碎片未初始化', 'error'); return }
-      const text = `HMAC_FRAG1=${hmac.hmacFrag1}\nHMAC_FRAG2=${hmac.hmacFrag2}\nHMAC_FRAG3=${hmac.hmacFrag3}`
       await navigator.clipboard.writeText(text)
-      showToast('HMAC 碎片（3个）已复制到剪贴板', 'success')
-    } catch { showToast('复制失败', 'error') }
-  }
-
-  // 一键复制 RSA 私钥碎片（3 个一起）
-  const copyRSAFrags = async () => {
-    try {
-      const rsa = securityOverview?.layers.rsaSignature
-      if (!rsa?.rsaPrivFrag1) { showToast('RSA 私钥碎片未初始化', 'error'); return }
-      const text = `RSA_PRIV_FRAG1=${rsa.rsaPrivFrag1}\nRSA_PRIV_FRAG2=${rsa.rsaPrivFrag2}\nRSA_PRIV_FRAG3=${rsa.rsaPrivFrag3}`
-      await navigator.clipboard.writeText(text)
-      showToast('RSA 私钥碎片（3个）已复制到剪贴板', 'success')
-    } catch { showToast('复制失败', 'error') }
-  }
-
-  // 复制 AES 密钥
-  const copyAESKey = async () => {
-    try {
-      const aes = securityOverview?.layers.aesEncryption
-      if (!aes?.aesKey) { showToast('AES 密钥未初始化', 'error'); return }
-      await navigator.clipboard.writeText(aes.aesKey)
-      showToast('AES 密钥已复制到剪贴板', 'success')
-    } catch { showToast('复制失败', 'error') }
-  }
-
-  // 复制证书指纹
-  const copyCertFingerprint = async () => {
-    try {
-      const cert = securityOverview?.layers.certPinning
-      if (!cert?.fingerprint) { showToast('证书指纹未配置', 'error'); return }
-      await navigator.clipboard.writeText(cert.fingerprint)
-      showToast('证书指纹已复制到剪贴板', 'success')
+      showToast(`${label} 已复制到剪贴板`, 'success')
     } catch { showToast('复制失败', 'error') }
   }
 
@@ -1074,17 +1040,20 @@ export default function Dashboard() {
                         )}
                         {securityOverview.layers.rsaSignature?.rsaPrivFrag1 && (
                           <div className="mt-2 pt-2 border-t border-slate-700/50">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <p className="text-slate-400 text-xs">私钥碎片 (3个 XOR 片段)</p>
-                              <button onClick={copyRSAFrags} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                                复制碎片
-                              </button>
-                            </div>
-                            <div className="space-y-1 text-xs font-mono text-slate-500">
-                              <p className="truncate">FRAG1: {securityOverview.layers.rsaSignature.rsaPrivFrag1.substring(0, 16)}...</p>
-                              <p className="truncate">FRAG2: {securityOverview.layers.rsaSignature.rsaPrivFrag2?.substring(0, 16)}...</p>
-                              <p className="truncate">FRAG3: {securityOverview.layers.rsaSignature.rsaPrivFrag3?.substring(0, 16)}...</p>
+                            <p className="text-slate-400 text-xs mb-2">私钥碎片 (3个 XOR 片段)</p>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG1: {securityOverview.layers.rsaSignature.rsaPrivFrag1.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.rsaSignature!.rsaPrivFrag1!, 'RSA FRAG1')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG2: {securityOverview.layers.rsaSignature.rsaPrivFrag2?.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.rsaSignature!.rsaPrivFrag2!, 'RSA FRAG2')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG3: {securityOverview.layers.rsaSignature.rsaPrivFrag3?.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.rsaSignature!.rsaPrivFrag3!, 'RSA FRAG3')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1095,26 +1064,27 @@ export default function Dashboard() {
                     <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-white font-semibold">HMAC 请求签名</h3>
-                        <div className="flex items-center gap-2">
-                          {securityOverview.layers.hmacSigning?.hmacFrag1 && (
-                            <button onClick={copyHMACFrags} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                              复制碎片
-                            </button>
-                          )}
-                          <button onClick={rotateHMAC} className="text-xs text-amber-400 hover:text-white px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-colors">轮换密钥</button>
-                        </div>
+                        <button onClick={rotateHMAC} className="text-xs text-amber-400 hover:text-white px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-colors">轮换密钥</button>
                       </div>
                       <div className="space-y-2 text-sm">
                         <p className="text-slate-400">状态: <span className={securityOverview.layers.hmacSigning?.enabled ? 'text-emerald-400' : 'text-slate-500'}>{securityOverview.layers.hmacSigning?.enabled ? '已启用' : '未启用'}</span></p>
                         {securityOverview.layers.hmacSigning?.algorithm && <p className="text-slate-400">算法: <span className="text-slate-300">{securityOverview.layers.hmacSigning.algorithm}</span></p>}
                         {securityOverview.layers.hmacSigning?.hmacFrag1 && (
-                          <div className="mt-1">
-                            <p className="text-slate-400 text-xs mb-1.5">碎片 (3个 XOR 片段)</p>
-                            <div className="space-y-1 text-xs font-mono text-slate-500">
-                              <p className="truncate">FRAG1: {securityOverview.layers.hmacSigning.hmacFrag1.substring(0, 16)}...</p>
-                              <p className="truncate">FRAG2: {securityOverview.layers.hmacSigning.hmacFrag2?.substring(0, 16)}...</p>
-                              <p className="truncate">FRAG3: {securityOverview.layers.hmacSigning.hmacFrag3?.substring(0, 16)}...</p>
+                          <div className="mt-2 pt-2 border-t border-slate-700/50">
+                            <p className="text-slate-400 text-xs mb-2">碎片 (3个 XOR 片段)</p>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG1: {securityOverview.layers.hmacSigning.hmacFrag1.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.hmacSigning!.hmacFrag1!, 'HMAC FRAG1')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG2: {securityOverview.layers.hmacSigning.hmacFrag2?.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.hmacSigning!.hmacFrag2!, 'HMAC FRAG2')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-slate-500 truncate flex-1">FRAG3: {securityOverview.layers.hmacSigning.hmacFrag3?.substring(0, 20)}...</span>
+                                <button onClick={() => copyText(securityOverview.layers.hmacSigning!.hmacFrag3!, 'HMAC FRAG3')} className="text-xs text-emerald-400 hover:text-white px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors shrink-0">复制</button>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1127,10 +1097,7 @@ export default function Dashboard() {
                         <h3 className="text-white font-semibold">AES-128 缓存加密</h3>
                         <div className="flex items-center gap-2">
                           {securityOverview.layers.aesEncryption?.aesKey && (
-                            <button onClick={copyAESKey} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                              复制密钥
-                            </button>
+                            <button onClick={() => copyText(securityOverview.layers.aesEncryption!.aesKey!, 'AES 密钥')} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors">复制密钥</button>
                           )}
                           <button onClick={rotateAES} className="text-xs text-amber-400 hover:text-white px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-colors">轮换密钥</button>
                         </div>
@@ -1165,10 +1132,7 @@ export default function Dashboard() {
                         <h3 className="text-white font-semibold">HTTPS 证书锁定</h3>
                         <div className="flex items-center gap-2">
                           {securityOverview.layers.certPinning?.fingerprint && (
-                            <button onClick={copyCertFingerprint} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                              复制指纹
-                            </button>
+                            <button onClick={() => copyText(securityOverview.layers.certPinning!.fingerprint!, '证书指纹')} className="text-xs text-emerald-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors">复制指纹</button>
                           )}
                           <button onClick={regenerateCertFingerprint} className="text-xs text-amber-400 hover:text-white px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 transition-colors">重新生成</button>
                         </div>
