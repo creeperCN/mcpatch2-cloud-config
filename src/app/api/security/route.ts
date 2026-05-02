@@ -2,7 +2,7 @@ import { db } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { NextResponse } from 'next/server'
-import { generateRSAKeyPair, splitKeyTo3Fragments, getPublicKeyFingerprint } from '@/lib/crypto-utils'
+import { generateRSAKeyPair, splitKeyTo3Fragments, getPublicKeyFingerprint, getAesKeyFingerprint } from '@/lib/crypto-utils'
 
 // GET /api/security — 获取 6 层安全防护状态总览（管理员）
 export async function GET() {
@@ -35,6 +35,11 @@ export async function GET() {
       rsaFingerprint = getPublicKeyFingerprint(secConfig.rsaPublicKey)
     }
 
+    let aesFingerprint = ''
+    if (secConfig.aesKey) {
+      aesFingerprint = getAesKeyFingerprint(secConfig.aesKey)
+    }
+
     return NextResponse.json({
       initialized: true,
       layers: {
@@ -45,6 +50,10 @@ export async function GET() {
           keyType: 'RSA-2048',
           algorithm: 'SHA256',
           fingerprint: rsaFingerprint,
+          // RSA 私钥碎片值（客户端配置用）
+          rsaPrivFrag1: secConfig.rsaPrivFrag1 || '',
+          rsaPrivFrag2: secConfig.rsaPrivFrag2 || '',
+          rsaPrivFrag3: secConfig.rsaPrivFrag3 || '',
         },
         hmacSigning: {
           enabled: hasHMACFrags,
@@ -52,6 +61,10 @@ export async function GET() {
           description: 'HMAC-SHA256 请求签名',
           algorithm: 'HMAC-SHA256',
           fragmentsCount: hasHMACFrags ? 3 : 0,
+          // HMAC 碎片值（客户端配置用）
+          hmacFrag1: secConfig.hmacFrag1 || '',
+          hmacFrag2: secConfig.hmacFrag2 || '',
+          hmacFrag3: secConfig.hmacFrag3 || '',
         },
         keyFragmentation: {
           enabled: hasHMACFrags && hasRSAFrags,
@@ -66,6 +79,9 @@ export async function GET() {
           description: 'AES-128 缓存加密',
           algorithm: 'AES-128-CBC',
           keyLength: secConfig.aesKey ? `${secConfig.aesKey.length * 4} bits` : undefined,
+          // AES 密钥值（客户端配置用）
+          aesKey: secConfig.aesKey || '',
+          aesFingerprint,
         },
         antiReplay: {
           enabled: hasHMACFrags,

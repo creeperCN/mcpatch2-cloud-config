@@ -8,15 +8,8 @@ import {
   validateTimestamp,
   isSignatureReplay,
   encryptConfig,
+  getAesKeyFingerprint,
 } from '@/lib/crypto-utils'
-
-/**
- * 生成 AES 密钥的 SHA-256 指纹（用于客户端验证密钥一致性）
- */
-function getAesKeyFingerprint(keyHex: string): string {
-  const hash = crypto.createHash('sha256').update(keyHex, 'hex').digest('hex')
-  return hash.toUpperCase().match(/.{2}/g)?.join(':') || hash.toUpperCase()
-}
 
 /**
  * 从数据库碎片还原安全密钥（运行时拼接，单次查询）

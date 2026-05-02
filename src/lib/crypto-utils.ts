@@ -61,6 +61,15 @@ export function getPublicKeyFingerprint(publicKeyPem: string): string {
   return hash.toUpperCase().match(/.{2}/g)?.join(':') || hash.toUpperCase()
 }
 
+/**
+ * 计算 AES 密钥的 SHA-256 指纹，格式: AA:BB:CC:...
+ * 用于客户端验证密钥一致性
+ */
+export function getAesKeyFingerprint(keyHex: string): string {
+  const hash = crypto.createHash('sha256').update(keyHex, 'hex').digest('hex')
+  return hash.toUpperCase().match(/.{2}/g)?.join(':') || hash.toUpperCase()
+}
+
 // ============================================================
 // Layer 2: HMAC-SHA256 请求签名 — 防止 API 被第三方直接调用
 // ============================================================
