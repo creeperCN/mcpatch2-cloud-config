@@ -21,46 +21,42 @@ if (!isCasdoorConfigured) {
 export const authOptions: NextAuthOptions = {
   providers: isCasdoorConfigured
     ? [
-        // Casdoor OAuth2 Provider（仅第三方登录，无账密表单）
-        // 手动指定所有端点，不使用 wellKnown（Casdoor OIDC Discovery 与 NextAuth 预期不完全兼容）
         {
           id: 'casdoor',
           name: 'Casdoor',
           type: 'oauth',
+          clientId: casdoorClientId,
+          clientSecret: casdoorClientSecret,
+          // 使用 wellKnown 让 openid-client 自动发现 OIDC 配置
+          // 包含 jwks_uri、issuer 等，解决 ID Token 签名验证和 iss 校验问题
+          wellKnown: `${casdoorEndpoint}/.well-known/openid-configuration`,
           authorization: {
             url: `${casdoorEndpoint}/login/oauth/authorize`,
             params: {
-              // 不使用 openid scope：避免 Casdoor 返回 ID Token 导致 iss 验证失败
-              // 用户信息已通过 /api/userinfo 端点获取，无需 ID Token
-              scope: 'profile email',
+              scope: 'openid profile email',
               // Casdoor 要求在授权 URL 中传递组织和应用参数
               organization: casdoorOrg,
               application: casdoorApp,
             },
           },
-          // 字符串格式 URL：NextAuth 自动用 HTTP Basic Auth 发送 clientId:clientSecret
-          // 并在 form body 中发送 grant_type + code + redirect_uri
           token: `${casdoorEndpoint}/api/login/oauth/access_token`,
           userinfo: `${casdoorEndpoint}/api/userinfo`,
-          clientId: casdoorClientId,
-          clientSecret: casdoorClientSecret,
-          // 不启用 idToken：Casdoor 的 OIDC ID Token iss 验证与 NextAuth v4 不兼容
-          // 改用 /api/userinfo 端点获取用户信息（更可靠）
-          idToken: false,
+          // issuer 与 Casdoor OIDC Discovery 返回的 issuer 一致
+          // 用于 ID Token 中的 iss 声明验证
+          issuer: casdoorEndpoint,
           checks: ['state'],
           profile(profile) {
             // Casdoor /api/userinfo 返回自有 User 对象（非标准 OIDC userinfo）
-            // 常见字段: name, displayName, email, avatar, sub 等
             const id = profile.sub || profile.id || profile.name || ''
             const name = profile.displayName || profile.name || profile.preferred_username || ''
             const email = profile.email || null
             let image: string | null = null
-            if (profile.picture) {
-              image = profile.picture
-            } else if (profile.avatar) {
+            if (profile.avatar) {
               image = profile.avatar.startsWith('http')
                 ? profile.avatar
                 : `${casdoorEndpoint}${profile.avatar}`
+            } else if (profile.picture) {
+              image = profile.picture
             }
             return { id, name, email, image }
           },
