@@ -1,0 +1,121 @@
+name: Build & Release
+
+on:
+  # 主分支推送时构建
+  push:
+    branches: [main]
+  # PR 时构建（不发布）
+  pull_request:
+    branches: [main]
+  # Release 发布时构建并上传产物
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: "20"
+  BUN_VERSION: "latest"
+
+jobs:
+  build:
+    name: 构建项目
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: ${{ env.BUN_VERSION }}
+
+      - name: 安装依赖
+        run: bun install --frozen-lockfile
+
+      - name: 生成 Prisma Client
+        run: bunx prisma generate
+
+      - name: 构建项目
+        run: bun run build
+
+      - name: 验证构建产物
+        run: |
+          echo "📋 验证 standalone 构建产物..."
+          test -f .next/standalone/server.js || { echo "❌ server.js 不存在"; exit 1; }
+          test -d .next/standalone/.next/static || { echo "❌ static 目录不存在"; exit 1; }
+          test -d .next/standalone/public || { echo "❌ public 目录不存在"; exit 1; }
+          echo "✅ 构建产物验证通过"
+
+      - name: 组装部署包
+        run: |
+          echo "📦 组装部署包..."
+
+          DEPLOY_DIR="mcpatch-cloud-control"
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR/db"
+
+          # 1. Standalone 构建产物
+          cp -r .next/standalone/* "$DEPLOY_DIR/"
+
+          # 2. 复制 Prisma schema（运行时需要）
+          mkdir -p "$DEPLOY_DIR/prisma"
+          cp prisma/schema.prisma "$DEPLOY_DIR/prisma/"
+
+          # 3. 复制数据库初始化脚本
+          cp init-db.js "$DEPLOY_DIR/"
+
+          # 4. 复制启动脚本
+          cp start.sh "$DEPLOY_DIR/"
+          chmod +x "$DEPLOY_DIR/start.sh"
+
+          # 5. 生成默认 .env 文件（不含敏感密钥，运行时由 start.sh 自动生成）
+          cat > "$DEPLOY_DIR/.env" << 'ENVEOF'
+          # Mcpatch Cloud Control 环境配置
+          # 启动时 start.sh 会自动生成缺失的配置项
+
+          # 数据库路径（start.sh 会自动修正为绝对路径）
+          DATABASE_URL=file:./db/custom.db
+
+          # NextAuth 回调地址（必须修改为实际访问地址）
+          # NEXTAUTH_URL=https://your-domain.com
+
+          # NextAuth 密钥（启动时自动生成）
+          # NEXTAUTH_SECRET=
+
+          # Casdoor SSO 配置（可选，不配置则使用本地账密登录）
+          # CASDOOR_ENDPOINT=https://auth.example.com
+          # CASDOOR_CLIENT_ID=
+          # CASDOOR_CLIENT_SECRET=
+          # CASDOOR_ORGANIZATION=built-in
+          # CASDOOR_APPLICATION=app-built-in
+          ENVEOF
+
+          # 6. 复制 package.json（包含运行脚本和依赖信息）
+          cp package.json "$DEPLOY_DIR/"
+
+          echo "✅ 部署包组装完成"
+          echo ""
+          echo "📁 部署包结构:"
+          cd "$DEPLOY_DIR" && find . -maxdepth 2 -not -path '*/node_modules/*' -not -path '*/.next/*' | head -30
+
+      - name: 打包部署压缩文件
+        run: |
+          ARCHIVE_NAME="mcpatch-cloud-control-$(date +%Y%m%d%H%M).tar.gz"
+          tar -czf "$ARCHIVE_NAME" mcpatch-cloud-control/
+          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> "$GITHUB_ENV"
+          echo "📊 压缩包大小: $(du -h "$ARCHIVE_NAME" | cut -f1)"
+
+      - name: 上传构建产物 (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpatch-cloud-control
+          path: mcpatch-cloud-control/
+          retention-days: 30
+
+      - name: 上传压缩包到 Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARCHIVE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
