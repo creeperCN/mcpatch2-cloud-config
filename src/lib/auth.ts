@@ -30,7 +30,9 @@ export const authOptions: NextAuthOptions = {
           authorization: {
             url: `${casdoorEndpoint}/login/oauth/authorize`,
             params: {
-              scope: 'openid profile email',
+              // 不使用 openid scope：避免 Casdoor 返回 ID Token 导致 iss 验证失败
+              // 用户信息已通过 /api/userinfo 端点获取，无需 ID Token
+              scope: 'profile email',
               // Casdoor 要求在授权 URL 中传递组织和应用参数
               organization: casdoorOrg,
               application: casdoorApp,
@@ -42,11 +44,9 @@ export const authOptions: NextAuthOptions = {
           userinfo: `${casdoorEndpoint}/api/userinfo`,
           clientId: casdoorClientId,
           clientSecret: casdoorClientSecret,
-          // 告知 NextAuth 该 Provider 会返回 ID Token，需验证 iss 声明
-          idToken: true,
-          // Casdoor 的 issuer 标识，与 ID Token 中的 iss 声明匹配
-          // 不设置此值会导致验证报错：unexpected iss value, expected undefined
-          issuer: casdoorEndpoint,
+          // 不启用 idToken：Casdoor 的 OIDC ID Token iss 验证与 NextAuth v4 不兼容
+          // 改用 /api/userinfo 端点获取用户信息（更可靠）
+          idToken: false,
           checks: ['state'],
           profile(profile) {
             // Casdoor /api/userinfo 返回自有 User 对象（非标准 OIDC userinfo）
