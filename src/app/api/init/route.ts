@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs'
 import yaml from 'js-yaml'
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import {
   generateRSAKeyPair,
   generateHMACSecret,
@@ -11,26 +13,25 @@ import {
   generateCertFingerprint,
 } from '@/lib/crypto-utils'
 
-// POST /api/init - 初始化系统，创建默认管理员 + 安全密钥
+// POST /api/init - 初始化系统（从 Casdoor SSO 会话自动获取管理员信息）
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { username, password } = body
-
-    if (typeof username !== 'string' || typeof password !== 'string') {
-      return NextResponse.json({ error: '用户名和密码必须为字符串' }, { status: 400 })
+    // ============ 认证校验：必须已通过 Casdoor SSO 登录 ============
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: '请先通过统一通行证登录后再初始化系统' }, { status: 401 })
     }
 
-    if (!username || !password) {
-      return NextResponse.json({ error: '请提供用户名和密码' }, { status: 400 })
+    // 从 Casdoor SSO 会话中获取用户名
+    const username = session.user.name || (session.user as any).id || 'admin'
+    if (!username || username.length < 1) {
+      return NextResponse.json({ error: '无法从登录会话中获取用户信息，请重新登录' }, { status: 400 })
     }
 
-    if (username.length < 2 || username.length > 32) {
-      return NextResponse.json({ error: '用户名长度需在 2-32 个字符之间' }, { status: 400 })
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json({ error: '密码至少 6 位' }, { status: 400 })
+    // ============ 检查是否已初始化 ============
+    const existingAdmin = await db.adminUser.findFirst()
+    if (existingAdmin) {
+      return NextResponse.json({ error: '系统已初始化，已有管理员账户' }, { status: 400 })
     }
 
     // ============ 6 层安全防护密钥生成（事务外，纯 CPU 操作） ============
@@ -45,61 +46,51 @@ export async function POST(request: Request) {
     const defaultYaml = getDefaultYaml()
     const parsedData = yaml.load(defaultYaml, { schema: yaml.JSON_SCHEMA }) as object
 
-    // 使用完整事务确保所有初始化操作原子性
-    let admin: any
-    try {
-      admin = await db.$transaction(async (tx) => {
-        const existingAdmin = await tx.adminUser.findFirst()
-        if (existingAdmin) {
-          throw new Error('ALREADY_INITIALIZED')
-        }
+    // ============ 使用完整事务确保所有初始化操作原子性 ============
+    // 密码生成随机占位符（Casdoor SSO 模式下不使用密码登录）
+    const randomPassword = crypto.randomBytes(32).toString('hex')
+    const passwordHash = await bcrypt.hash(randomPassword, 12)
 
-        const passwordHash = await bcrypt.hash(password, 12)
-        const newAdmin = await tx.adminUser.create({
-          data: { username, passwordHash },
-        })
-
-        // 创建默认配置
-        await tx.cloudConfig.create({
-          data: {
-            version: 1,
-            yamlData: defaultYaml,
-            jsonData: JSON.stringify(parsedData),
-            isActive: true,
-            changeNote: '系统初始化 - 默认配置',
-          },
-        })
-
-        // 创建默认 API 密钥
-        await tx.apiKey.create({
-          data: { key: defaultKey, name: '默认密钥' },
-        })
-
-        // 存储安全配置（私钥和 HMAC 密钥不存储完整形式）
-        await tx.securityConfig.create({
-          data: {
-            rsaPublicKey,
-            rsaPrivateKey: '',
-            hmacSecret: '',
-            hmacFrag1: hmacFrags.frag1,
-            hmacFrag2: hmacFrags.frag2,
-            hmacFrag3: hmacFrags.frag3,
-            rsaPrivFrag1: rsaPrivFrags.frag1,
-            rsaPrivFrag2: rsaPrivFrags.frag2,
-            rsaPrivFrag3: rsaPrivFrags.frag3,
-            aesKey,
-            certFingerprint,
-          },
-        })
-
-        return newAdmin
+    const admin = await db.$transaction(async (tx) => {
+      const newAdmin = await tx.adminUser.create({
+        data: { username, passwordHash },
       })
-    } catch (error: any) {
-      if (error.message === 'ALREADY_INITIALIZED') {
-        return NextResponse.json({ error: '系统已初始化，已有管理员账户' }, { status: 400 })
-      }
-      throw error
-    }
+
+      // 创建默认配置
+      await tx.cloudConfig.create({
+        data: {
+          version: 1,
+          yamlData: defaultYaml,
+          jsonData: JSON.stringify(parsedData),
+          isActive: true,
+          changeNote: '系统初始化 - 默认配置',
+        },
+      })
+
+      // 创建默认 API 密钥
+      await tx.apiKey.create({
+        data: { key: defaultKey, name: '默认密钥' },
+      })
+
+      // 存储安全配置（私钥和 HMAC 密钥不存储完整形式）
+      await tx.securityConfig.create({
+        data: {
+          rsaPublicKey,
+          rsaPrivateKey: '',
+          hmacSecret: '',
+          hmacFrag1: hmacFrags.frag1,
+          hmacFrag2: hmacFrags.frag2,
+          hmacFrag3: hmacFrags.frag3,
+          rsaPrivFrag1: rsaPrivFrags.frag1,
+          rsaPrivFrag2: rsaPrivFrags.frag2,
+          rsaPrivFrag3: rsaPrivFrags.frag3,
+          aesKey,
+          certFingerprint,
+        },
+      })
+
+      return newAdmin
+    })
 
     return NextResponse.json({
       success: true,

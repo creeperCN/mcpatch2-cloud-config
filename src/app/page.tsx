@@ -319,22 +319,17 @@ export default function Dashboard() {
   }
 
   const initSystem = async () => {
-    const username = prompt('设置管理员用户名', 'admin')
-    if (!username) return
-    const password = prompt('设置管理员密码（至少6位）')
-    if (!password || password.length < 6) { showToast('密码至少6位', 'error'); return }
     setLoading(true)
     try {
       const res = await fetch('/api/init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
       })
       const data = await res.json()
       if (res.ok) {
         showToast('系统初始化成功！API密钥已生成，请妥善保管', 'success')
         setIsInitialized(true)
-        alert(`API 密钥（请保存好）：\n${data.apiKey}`)
+        alert(`API 密钥（请保存好）：\n${data.apiKey}\n\n管理员：${data.admin?.username || '未知'}`)
       } else {
         showToast(data.error, 'error')
       }
@@ -358,13 +353,43 @@ export default function Dashboard() {
             <p className="text-slate-400 mt-2">首次使用，需要初始化系统</p>
           </div>
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8">
-            <p className="text-slate-300 mb-6">设置管理员账户，初始化系统后将自动创建默认配置和 API 密钥。</p>
+            <p className="text-slate-300 mb-2">点击下方按钮初始化系统，将自动完成以下操作：</p>
+            <ul className="text-slate-400 text-sm space-y-1.5 mb-6 ml-4">
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span>使用当前统一通行证账户作为管理员</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span>创建默认配置文件</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span>生成 API 密钥</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span>启用 6 层安全防护（RSA/HMAC/AES/碎片化/防重放/证书锁定）</span>
+              </li>
+            </ul>
             <button
               onClick={initSystem}
               disabled={loading}
-              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? '初始化中...' : '开始初始化'}
+              {loading ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  正在初始化...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  一键初始化系统
+                </>
+              )}
             </button>
           </div>
         </div>
