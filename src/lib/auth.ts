@@ -42,6 +42,11 @@ export const authOptions: NextAuthOptions = {
           userinfo: `${casdoorEndpoint}/api/userinfo`,
           clientId: casdoorClientId,
           clientSecret: casdoorClientSecret,
+          // 告知 NextAuth 该 Provider 会返回 ID Token，需验证 iss 声明
+          idToken: true,
+          // Casdoor 的 issuer 标识，与 ID Token 中的 iss 声明匹配
+          // 不设置此值会导致验证报错：unexpected iss value, expected undefined
+          issuer: casdoorEndpoint,
           checks: ['state'],
           profile(profile) {
             // Casdoor /api/userinfo 返回自有 User 对象（非标准 OIDC userinfo）
